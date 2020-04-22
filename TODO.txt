@@ -1,0 +1,6 @@
+TODO
+
+- Create food to make game playable
+- Snake dies if it hits itself/wall
+- Fix direction change (all cubes change at once right now)
+- Bigger window size
