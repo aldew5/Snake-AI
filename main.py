@@ -1,12 +1,3 @@
-"""
-STATUS
-Need to create a queue for turns so that the turnpos and turn_dir isn't just
-overwritten when a new turn is requested before the previous one has finished.
-
-Implement a turn stack FIFO.
-"""
-
-
 import pygame
 
 pygame.init()
@@ -22,8 +13,8 @@ class Block(object):
         self.y = y
         self.l = l
         self.direction = direction
-        self.turn_pos = None
-        self.turn_dir = None
+        self.turn_pos = []
+        self.turn_dir = []
         
 
     def draw(self):
@@ -37,9 +28,7 @@ class Snake(object):
         self.v = 10
         self.length = length
         self.direction = 'down'
-        self.blocks = [Block(self.x, self.y, 30, self.direction),\
-                       Block(self.x, self.y - 40, 30, self.direction),
-                       Block(self.x, self.y - 80, 30, self.direction)]
+        self.blocks = [Block(self.x, self.y, 30, self.direction)]
         self.turning = False
 
     def grow(self):
@@ -63,14 +52,9 @@ class Snake(object):
         snake.direction = direction
         snake.turning = True
 
-        print('turning', direction, 'at', pos)
         for block in self.blocks:
-            block.turn_pos = pos
-            block.turn_dir = direction
-
-        for block in self.blocks:
-            print(block.turn_dir)
-            print('in function')
+            block.turn_pos.append(pos)
+            block.turn_dir.append(direction)
         
 
     def draw(self):
@@ -78,7 +62,7 @@ class Snake(object):
             block.draw()
             
 
-snake = Snake(40, 50, 2)
+snake = Snake(40, 50, 1)
 
 def drawWindow(win):
     win.fill((0,0,0))
@@ -89,7 +73,6 @@ def drawWindow(win):
 run = True
 
 while run:
-        
     clock.tick(27)
 
     keys = pygame.key.get_pressed()
@@ -101,6 +84,7 @@ while run:
     # turn left
     if keys[pygame.K_LEFT] and snake.direction != 'left' and snake.direction != "right":
         if snake.x >= 10:
+            # two conditions to maintain distance between blocks
             if snake.direction == "down":
                 snake.turn((snake.blocks[0].x, snake.blocks[0].y + 10), 'left')
             elif snake.direction == "up":
@@ -128,52 +112,68 @@ while run:
                 snake.turn((snake.blocks[0].x - 10, snake.blocks[0].y), 'up')
             elif snake.direction == "right":
                 snake.turn((snake.blocks[0].x+ 10, snake.blocks[0].y), 'up')
-            
+
+    # for testing
+    elif keys[pygame.K_SPACE]:
+        snake.grow()
     
     for block in snake.blocks:
         # maintain a velocity in last direction
         if block.direction == 'left':
             if block.x >= 10:
                 block.x -= snake.v
+            # hit a wall
+            else:
+                run = False
                 
         elif block.direction == "right":
             if block.x <= 460:
                 block.x += snake.v
+            else:
+                run = False
                 
         elif block.direction == "down":
             if block.y <= 460:
                 block.y += snake.v
+            else:
+                run = False
         elif block.direction == "up":
             if block.y >= 10:
                 block.y -= snake.v
+            else:
+                run = False
 
-        
+
+    # check for turning blocks
     if snake.turning:
         for block in snake.blocks:
-            if snake.blocks.index(block) == 0 and block.turn_pos != None:
-                block.direction = block.turn_dir
+            if snake.blocks.index(block) == 0 and len(block.turn_pos) != 0:
+                print('1')
+                block.direction = block.turn_dir[0]
 
-                block.turn_dir = None
-                block.turn_pos = None
+                block.turn_dir.pop(0)
+                block.turn_pos.pop(0)
         
-                
-            elif block.turn_pos != None and block.x == block.turn_pos[0] and block.y == block.turn_pos[1]:
-                block.direction = block.turn_dir
+            # secondary block turning
+            elif len(block.turn_pos) != 0 and block.x == block.turn_pos[0][0] and block.y == block.turn_pos[0][1]:
+                block.direction = block.turn_dir[0]
 
-                block.turn_dir = None
-                block.turn_pos = None
+                block.turn_dir.pop(0)
+                block.turn_pos.pop(0)
 
+        # count non-turning blocks
         for block in snake.blocks:
             count = 0
-            if block.turn_dir == None and block.turn_pos == None:
+            if len(block.turn_dir) == 0 and len(block.turn_pos) == 0:
                 count += 1
 
+        # there are no turns still active
         if count == len(snake.blocks):
             snake.turning = False
                 
     drawWindow(win)
         
 
-
+print('GAME OVER')
 
     
