@@ -1,4 +1,5 @@
 import pygame
+import random
 
 pygame.init()
 
@@ -35,13 +36,13 @@ class Snake(object):
         self.length += 1
         
         if self.direction == "left":
-            new_block = Block(self.blocks[0].x + 40*(snake.length), self.blocks[0].y, 30, 'left')
+            new_block = Block(self.blocks[0].x + 40*(snake.length - 1), self.blocks[0].y, 30, 'left')
         elif self.direction == "right":
-            new_block = Block(self.blocks[0].x - 40*(snake.length), self.blocks[0].y, 30, 'right')
+            new_block = Block(self.blocks[0].x - 40*(snake.length - 1), self.blocks[0].y, 30, 'right')
         elif self.direction == 'down':
-            new_block = Block(self.blocks[0].x, self.blocks[0].y - 40*(snake.length), 30, 'down')
+            new_block = Block(self.blocks[0].x, self.blocks[0].y - 40*(snake.length - 1), 30, 'down')
         else:
-            new_block = Block(self.blocks[0].x, self.blocks[0].y + 40*(snake.length), 30, 'up')
+            new_block = Block(self.blocks[0].x, self.blocks[0].y + 40*(snake.length - 1), 30, 'up')
 
         snake.blocks.append(new_block)
 
@@ -60,13 +61,27 @@ class Snake(object):
     def draw(self):
         for block in self.blocks:
             block.draw()
+
+class Food(object):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.center_x = (self.x + 20)/2
+        self.center_y = (self.y + 20)/2
+        
+    def draw(self):
+         pygame.draw.rect(win, (255,0,0), ((self.x, self.y), (20,20)))
+    
             
 
 snake = Snake(40, 50, 1)
+food = Food(100, 50)
 
 def drawWindow(win):
     win.fill((0,0,0))
+    food.draw()
     snake.draw()
+    
     
     pygame.display.update()
 
@@ -170,6 +185,40 @@ while run:
         # there are no turns still active
         if count == len(snake.blocks):
             snake.turning = False
+
+    # check for picking up food
+    if food.x in range(snake.blocks[0].x, snake.blocks[0].x + 30) or (food.x + 10)\
+       in range(snake.blocks[0].x, snake.blocks[0].x + 30):
+
+        if food.y in range(snake.blocks[0].y, snake.blocks[0].y + 30) or (food.y + 10)\
+           in range(snake.blocks[0].x, snake.blocks[0].x + 30):
+            print('hehrhr2')
+            snake.grow()
+            x_pos = random.randint(0, 500)
+            y_pos = random.randint(0, 500)
+
+            food = Food(x_pos, y_pos)
+
+    # check for collision with self
+    for block in snake.blocks:
+        # blocks after
+        for b in snake.blocks[snake.blocks.index(block)+1:]:
+            if b.x in range(block.x, block.x + 10) or (b.x + 10)\
+               in range(block.x, block.x + 10):
+                if b.y in range(block.y, block.y + 10) or (b.y + 10)\
+                   in range(block.y, block.y + 10):
+                        run = False
+                        break
+        # blocks before
+        for b in snake.blocks[:snake.blocks.index(block)]:
+            if b.x in range(block.x, block.x + 10) or (b.x + 10)\
+               in range(block.x, block.x + 10):
+                if b.y in range(block.y, block.y + 10) or (b.y + 10)\
+                   in range(block.y, block.y + 10):
+                        run = False
+                        break
+
+            
                 
     drawWindow(win)
         
